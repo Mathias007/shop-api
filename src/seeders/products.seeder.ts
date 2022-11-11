@@ -1,4 +1,4 @@
-import { ProductSchema } from "../schemas/ProductSchema.js";
+import { ProductSchema } from "../schemas/Product.schema";
 
 async function isProductExisting() {
     const exec = await ProductSchema.find().exec();

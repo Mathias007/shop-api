@@ -1,19 +1,26 @@
-import mongoose from "mongoose";
+import { Request, Response } from "express";
+import mongoose, { Query } from "mongoose";
 
-import { ProductSchema } from "../schemas/ProductSchema.js";
+import { ProductSchema } from "../schemas/Product.schema";
 
-import statuses from "../config/statuses.js";
+import statuses from "../config/statuses";
 
 import {
     CASE_UNAUTHORIZED_MESSAGE,
     CASE_NOT_FOUND_MESSAGE,
     CASE_SUCCESS_MESSAGE,
 } from "../config/messages";
+import { NextFunction } from "express";
 
 const { UNAUTHORIZED, NOT_FOUND, CONFLICT } = statuses;
 
-export const getProductsList = (req, res, next) => {
-    ProductSchema.find({}, {}, (err, productsData) => {
+export const getProductsList = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    // @ts-ignore
+    ProductSchema.find({}, {}, (err: any, productsData: any) => {
         if (err || !productsData) {
             res.status(UNAUTHORIZED).send({
                 message: CASE_UNAUTHORIZED_MESSAGE("PRODUCTS"),
@@ -33,7 +40,11 @@ export const getProductsList = (req, res, next) => {
     });
 };
 
-export const getProductByID = (req, res, next) => {
+export const getProductByID = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     const messages = {
         CASE_UNAUTHORIZED_MESSAGE: "Wystąpił problem z autoryzacją!",
         CASE_NOT_FOUND_MESSAGE:
@@ -49,7 +60,8 @@ export const getProductByID = (req, res, next) => {
     } = messages;
 
     let productID = mongoose.Types.ObjectId(req.body.id);
-    ProductSchema.findOne({ _id: productID }, (err, product) => {
+
+    ProductSchema.findOne({ _id: productID }, (err: any, product: any) => {
         if (err) {
             res.status(UNAUTHORIZED).send({
                 message: CASE_UNAUTHORIZED_MESSAGE,
@@ -67,7 +79,11 @@ export const getProductByID = (req, res, next) => {
     });
 };
 
-export const addSingleProduct = (req, res, next) => {
+export const addSingleProduct = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     const messages = {
         CASE_SUCCESS_MESSAGE: "Produkt został skutecznie dodany!",
         CASE_CONFLICT_MESSAGE:
@@ -92,7 +108,11 @@ export const addSingleProduct = (req, res, next) => {
     );
 };
 
-export const addManyProducts = (req, res, next) => {
+export const addManyProducts = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     const messages = {
         CASE_SUCCESS_MESSAGE:
             "Zestaw produktów został skutecznie umieszczony w bazie!",
@@ -105,11 +125,15 @@ export const addManyProducts = (req, res, next) => {
     console.log(req.body.productsArray);
 
     ProductSchema.insertMany(req.body.productsArray)
-        .then(res.json({ message: CASE_SUCCESS_MESSAGE }))
+        .then(() => res.json({ message: CASE_SUCCESS_MESSAGE }))
         .catch((error) => next(error));
 };
 
-export const editProductByID = (req, res, next) => {
+export const editProductByID = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     const messages = {
         CASE_UNAUTHORIZED_MESSAGE:
             "Wystąpił problem z autoryzacją podczas modyfikacji danych produktu!",
@@ -131,6 +155,7 @@ export const editProductByID = (req, res, next) => {
         {
             $set: req.body,
         },
+        // @ts-ignore
         (err, product) => {
             if (err) {
                 res.status(UNAUTHORIZED).send({
@@ -149,7 +174,11 @@ export const editProductByID = (req, res, next) => {
     );
 };
 
-export const deleteProductByID = (req, res, next) => {
+export const deleteProductByID = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     const messages = {
         CASE_UNAUTHORIZED_MESSAGE:
             "Wystąpił problem z autoryzacją podczas usuwania danych produktu!",
@@ -165,6 +194,7 @@ export const deleteProductByID = (req, res, next) => {
 
     let productID = mongoose.Types.ObjectId(req.body.id);
 
+    // @ts-ignore
     ProductSchema.deleteOne({ _id: productID }, (err, product) => {
         if (err) {
             res.status(UNAUTHORIZED).send({

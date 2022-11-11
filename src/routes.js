@@ -7,11 +7,11 @@ import {
     addManyProducts,
     editProductByID,
     deleteProductByID,
-} from "./controllers/products.controller.js";
+} from "./controllers/products.controller";
 
-import { ROOT_API_MESSAGE } from "./config/messages.js";
+import { ROOT_API_MESSAGE } from "./config/messages";
 
-import routesPaths from "./config/routesPaths.js";
+import routesPaths from "./config/routesPaths";
 const { ROOT, PRODUCTS } = routesPaths;
 
 const router = express.Router();
