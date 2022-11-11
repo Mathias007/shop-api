@@ -1,10 +1,7 @@
-const addressFragments = {
-    // main API
-    API: "api",
+import { TCrudDNames } from "../types/config.types";
 
+const addressFragments: TCrudDNames = {
     PRODUCTS: "products",
-
-    // CRUD (common fragments)
     ADD: "add",
     ADD_MANY: "add_many",
     EDIT: "edit",

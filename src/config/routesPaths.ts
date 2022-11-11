@@ -1,4 +1,5 @@
-import addressFragments from "./addressFragments.js";
+import addressFragments from "./addressFragments";
+import { TCrudDNames } from "../types/config.types";
 
 const {
     PRODUCTS,
@@ -10,9 +11,13 @@ const {
     SINGLE,
 } = addressFragments;
 
-const routesPaths = {
+const routesPaths: {
+    ROOT: string;
+    PRODUCTS: TCrudDNames;
+} = {
     ROOT: "/",
     PRODUCTS: {
+        PRODUCTS: `/${PRODUCTS}`,
         LIST: `/${PRODUCTS}/${LIST}`,
         SINGLE: `/${PRODUCTS}/${SINGLE}`,
         ADD: `/${PRODUCTS}/${ADD}`,

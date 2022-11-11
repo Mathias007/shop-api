@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
-import { collections } from "../config/names.js";
+import { collections } from "../config/database";
 
-const Schema = mongoose.Schema;
+import { IProduct } from "../interfaces/Product.interface";
 
-const Product = new Schema(
+const Product = new Schema<IProduct>(
     {
         Name: {
             type: String,
@@ -26,7 +26,7 @@ const Product = new Schema(
     }
 );
 
-export const ProductSchema = mongoose.model(
+export const ProductSchema = model<IProduct>(
     collections.products,
     Product,
     collections.products
