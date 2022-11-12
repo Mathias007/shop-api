@@ -5,21 +5,21 @@ async function isProductExisting() {
     return (exec.length = 0);
 }
 
-// Initialize first sample product
-export const initializeProductsData = async () => {
+export const initializeProductData = async () => {
     if (!(await isProductExisting())) {
         const product = [
             new ProductSchema({
                 Name: "Produkt testowy",
-                Price: "50",
+                Price: 50,
                 UpdateDate: new Date(),
             }),
         ];
         let done = 0;
         for (let i = 0; i < product.length; i++) {
-            product[i].save((err, result) => {
+            product[i].save((err, res) => {
                 done++;
             });
         }
+        console.log("Inicjalizacja produktu testowego");
     }
 };

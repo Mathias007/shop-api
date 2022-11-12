@@ -10,9 +10,10 @@ const Product = new Schema<IProduct>(
             type: String,
             trim: true,
             required: true,
+            max: 100,
         },
         Price: {
-            type: String,
+            type: Number,
             trim: true,
             required: true,
         },

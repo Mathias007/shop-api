@@ -1,41 +1,58 @@
 import { Request, Response } from "express";
-import mongoose, { Query } from "mongoose";
+import mongoose from "mongoose";
 
 import { ProductSchema } from "../schemas/Product.schema";
+import { IProductDataUnstructurized } from "../interfaces/Product.interface";
+import {
+    serializeRespondedData,
+    serializeRespondedArray,
+} from "../helpers/products.helpers";
 
 import statuses from "../config/statuses";
 
-import {
-    CASE_UNAUTHORIZED_MESSAGE,
-    CASE_NOT_FOUND_MESSAGE,
-    CASE_SUCCESS_MESSAGE,
-} from "../config/messages";
 import { NextFunction } from "express";
 
-const { UNAUTHORIZED, NOT_FOUND, CONFLICT } = statuses;
+const { BAD_REQUEST, UNAUTHORIZED, NOT_FOUND } = statuses;
+
+export const getMainApiMessage = (req: Error, res: Response) => {
+    res.json({
+        message: "Shop App: Produkty (API)",
+    });
+};
 
 export const getProductsList = (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
-    // @ts-ignore
-    ProductSchema.find({}, {}, (err: any, productsData: any) => {
+    const messages = {
+        CASE_UNAUTHORIZED_MESSAGE: "Wystąpił problem z autoryzacją!",
+        CASE_NOT_FOUND_MESSAGE: "Nie znaleziono listy produktów!",
+        CASE_SUCCESS_MESSAGE:
+            "Wyszukiwanie listy produktów zakończyło się powodzeniem.",
+    };
+
+    const {
+        CASE_UNAUTHORIZED_MESSAGE,
+        CASE_NOT_FOUND_MESSAGE,
+        CASE_SUCCESS_MESSAGE,
+    } = messages;
+
+    ProductSchema.find((err: Error, productsData: IProductDataUnstructurized[]) => {
         if (err || !productsData) {
             res.status(UNAUTHORIZED).send({
-                message: CASE_UNAUTHORIZED_MESSAGE("PRODUCTS"),
+                message: CASE_UNAUTHORIZED_MESSAGE,
             });
             next(err);
         } else if (!productsData) {
             res.status(NOT_FOUND).send({
-                message: CASE_NOT_FOUND_MESSAGE("PRODUCTS"),
+                message: CASE_NOT_FOUND_MESSAGE,
             });
         } else {
             res.json({
-                message: CASE_SUCCESS_MESSAGE("PRODUCTS"),
-                productsData,
+                message: CASE_SUCCESS_MESSAGE,
+                productsData: serializeRespondedArray(productsData),
             });
-            console.log(productsData);
         }
     });
 };
@@ -46,6 +63,8 @@ export const getProductByID = (
     next: NextFunction
 ) => {
     const messages = {
+        CASE_BAD_REQUEST_ID_MESSAGE:
+            "Błędne żądanie - nie wysłano identyfikatora poszukiwanego produktu!",
         CASE_UNAUTHORIZED_MESSAGE: "Wystąpił problem z autoryzacją!",
         CASE_NOT_FOUND_MESSAGE:
             "Nie znaleziono produktu o podanym identyfikatorze!",
@@ -54,29 +73,40 @@ export const getProductByID = (
     };
 
     const {
+        CASE_BAD_REQUEST_ID_MESSAGE,
         CASE_UNAUTHORIZED_MESSAGE,
         CASE_NOT_FOUND_MESSAGE,
         CASE_SUCCESS_MESSAGE,
     } = messages;
 
-    let productID = mongoose.Types.ObjectId(req.body.id);
+    if (!req.body.id) {
+        res.status(BAD_REQUEST).send({
+            message: CASE_BAD_REQUEST_ID_MESSAGE,
+        });
+    } else {
+        let productID = mongoose.Types.ObjectId(req.body.id);
 
-    ProductSchema.findOne({ _id: productID }, (err: any, product: any) => {
-        if (err) {
-            res.status(UNAUTHORIZED).send({
-                message: CASE_UNAUTHORIZED_MESSAGE,
-            });
-            next(err);
-        } else if (!product) {
-            res.status(NOT_FOUND).send({ message: CASE_NOT_FOUND_MESSAGE });
-        } else {
-            console.log(product);
-            res.json({
-                message: CASE_SUCCESS_MESSAGE,
-                product,
-            });
-        }
-    });
+        ProductSchema.findOne(
+            { _id: productID },
+            (err: Error, product: Response) => {
+                if (err) {
+                    res.status(UNAUTHORIZED).send({
+                        message: CASE_UNAUTHORIZED_MESSAGE,
+                    });
+                    next(err);
+                } else if (!product) {
+                    res.status(NOT_FOUND).send({
+                        message: CASE_NOT_FOUND_MESSAGE,
+                    });
+                } else {
+                    res.json({
+                        message: CASE_SUCCESS_MESSAGE,
+                        foundProduct: serializeRespondedData(product),
+                    });
+                }
+            }
+        );
+    }
 };
 
 export const addSingleProduct = (
@@ -85,48 +115,51 @@ export const addSingleProduct = (
     next: NextFunction
 ) => {
     const messages = {
+        CASE_BAD_REQUEST_NON_DATA_MESSAGE:
+            "Błędne żądanie - produkt musi mieć nazwę, cenę. Niepodanie daty poskutkuje automatycznym dodaniem aktualnej daty, natomiast pozostałe informacje muszą zostać wysłane przez użytkownika",
+        CASE_BAD_REQUEST_VALIDATION_NAME_MESSAGE:
+            "Błędne żądanie - nazwa produktu może mieć maksymalnie 100 znaków!",
         CASE_SUCCESS_MESSAGE: "Produkt został skutecznie dodany!",
-        CASE_CONFLICT_MESSAGE:
-            "Żądanie nie może zostać wykonane z powodu zaistnienia konfliktu!",
+        CASE_UNAUTHORIZED_MESSAGE: "Wystąpił problem z autoryzacją!",
     };
 
-    const { CASE_CONFLICT_MESSAGE, CASE_SUCCESS_MESSAGE } = messages;
+    const {
+        CASE_BAD_REQUEST_NON_DATA_MESSAGE,
+        CASE_BAD_REQUEST_VALIDATION_NAME_MESSAGE,
+        CASE_UNAUTHORIZED_MESSAGE,
+        CASE_SUCCESS_MESSAGE,
+    } = messages;
 
-    ProductSchema.create(
-        {
-            Name: req.body.name,
-            Price: req.body.price,
-            UpdateDate: req.body.date,
-        },
-        (error, result) => {
-            if (error) next(error);
-            else
-                res.json({
-                    message: CASE_SUCCESS_MESSAGE,
-                });
-        }
-    );
-};
-
-export const addManyProducts = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    const messages = {
-        CASE_SUCCESS_MESSAGE:
-            "Zestaw produktów został skutecznie umieszczony w bazie!",
-        CASE_CONFLICT_MESSAGE:
-            "Żądanie nie może zostać wykonane z powodu zaistnienia konfliktu!",
-    };
-
-    const { CASE_CONFLICT_MESSAGE, CASE_SUCCESS_MESSAGE } = messages;
-
-    console.log(req.body.productsArray);
-
-    ProductSchema.insertMany(req.body.productsArray)
-        .then(() => res.json({ message: CASE_SUCCESS_MESSAGE }))
-        .catch((error) => next(error));
+    if (!req.body.name || !req.body.price) {
+        res.status(BAD_REQUEST).send({
+            message: CASE_BAD_REQUEST_NON_DATA_MESSAGE,
+        });
+    } else if (req.body.name.length > 100) {
+        res.status(BAD_REQUEST).send({
+            message: CASE_BAD_REQUEST_VALIDATION_NAME_MESSAGE,
+        });
+    } else {
+        ProductSchema.create(
+            {
+                Name: req.body.name,
+                Price: req.body.price,
+                UpdateDate: req.body.date,
+            },
+            (err: Error, product: any) => {
+                if (err) {
+                    res.status(UNAUTHORIZED).send({
+                        message: CASE_UNAUTHORIZED_MESSAGE,
+                    });
+                    next(err);
+                } else {
+                    res.json({
+                        message: CASE_SUCCESS_MESSAGE,
+                        addedProduct: serializeRespondedData(product),
+                    });
+                }
+            }
+        );
+    }
 };
 
 export const editProductByID = (
@@ -135,6 +168,12 @@ export const editProductByID = (
     next: NextFunction
 ) => {
     const messages = {
+        CASE_BAD_REQUEST_ID_MESSAGE:
+            "Błędne żądanie - nie wysłano identyfikatora modyfikowanego produktu!",
+        CASE_BAD_REQUEST_NON_DATA_MESSAGE:
+            "Błędne żądanie - produkt musi mieć nazwę, cenę. Niepodanie daty poskutkuje automatycznym dodaniem aktualnej daty, natomiast pozostałe informacje muszą zostać wysłane przez użytkownika",
+        CASE_BAD_REQUEST_VALIDATION_NAME_MESSAGE:
+            "Błędne żądanie - nazwa produktu może mieć maksymalnie 100 znaków!",
         CASE_UNAUTHORIZED_MESSAGE:
             "Wystąpił problem z autoryzacją podczas modyfikacji danych produktu!",
         CASE_NOT_FOUND_MESSAGE:
@@ -143,35 +182,56 @@ export const editProductByID = (
     };
 
     const {
+        CASE_BAD_REQUEST_ID_MESSAGE,
+        CASE_BAD_REQUEST_NON_DATA_MESSAGE,
+        CASE_BAD_REQUEST_VALIDATION_NAME_MESSAGE,
         CASE_UNAUTHORIZED_MESSAGE,
         CASE_NOT_FOUND_MESSAGE,
         CASE_SUCCESS_MESSAGE,
     } = messages;
 
-    let productID = mongoose.Types.ObjectId(req.body.id);
+    if (!req.body.id) {
+        res.status(BAD_REQUEST).send({
+            message: CASE_BAD_REQUEST_ID_MESSAGE,
+        });
+    } else if (!req.body.name || !req.body.price) {
+        res.status(BAD_REQUEST).send({
+            message: CASE_BAD_REQUEST_NON_DATA_MESSAGE,
+        });
+    } else if (req.body.name && req.body.name.length > 100) {
+        res.status(BAD_REQUEST).send({
+            message: CASE_BAD_REQUEST_VALIDATION_NAME_MESSAGE,
+        });
+    } else {
+        let productID = mongoose.Types.ObjectId(req.body.id);
 
-    ProductSchema.updateOne(
-        { _id: productID },
-        {
-            $set: req.body,
-        },
-        // @ts-ignore
-        (err, product) => {
-            if (err) {
-                res.status(UNAUTHORIZED).send({
-                    message: CASE_UNAUTHORIZED_MESSAGE,
-                });
-                next(err);
-            } else if (!product) {
-                res.status(NOT_FOUND).send({
-                    message: CASE_NOT_FOUND_MESSAGE,
-                });
-            } else {
-                console.log(product);
-                res.json({ message: CASE_SUCCESS_MESSAGE, product });
+        ProductSchema.findOneAndUpdate(
+            { _id: productID },
+            {
+                Name: req.body.name,
+                Price: req.body.price,
+                UpdateDate: req.body.date || new Date(),
+            },
+            {},
+            (err: Error, product: any) => {
+                if (err) {
+                    res.status(UNAUTHORIZED).send({
+                        message: CASE_UNAUTHORIZED_MESSAGE,
+                    });
+                    next(err);
+                } else if (!product) {
+                    res.status(NOT_FOUND).send({
+                        message: CASE_NOT_FOUND_MESSAGE,
+                    });
+                } else {
+                    res.json({
+                        message: CASE_SUCCESS_MESSAGE,
+                        editedProduct: serializeRespondedData(product),
+                    });
+                }
             }
-        }
-    );
+        );
+    }
 };
 
 export const deleteProductByID = (
@@ -180,6 +240,8 @@ export const deleteProductByID = (
     next: NextFunction
 ) => {
     const messages = {
+        CASE_BAD_REQUEST_ID_MESSAGE:
+            "Błędne żądanie - nie wysłano identyfikatora modyfikowanego produktu!",
         CASE_UNAUTHORIZED_MESSAGE:
             "Wystąpił problem z autoryzacją podczas usuwania danych produktu!",
         CASE_NOT_FOUND_MESSAGE: "Nie ma produktu o wybranym identyfikatorze!",
@@ -187,27 +249,39 @@ export const deleteProductByID = (
     };
 
     const {
+        CASE_BAD_REQUEST_ID_MESSAGE,
         CASE_UNAUTHORIZED_MESSAGE,
         CASE_NOT_FOUND_MESSAGE,
         CASE_SUCCESS_MESSAGE,
     } = messages;
 
-    let productID = mongoose.Types.ObjectId(req.body.id);
+    if (!req.body.id) {
+        res.status(BAD_REQUEST).send({
+            message: CASE_BAD_REQUEST_ID_MESSAGE,
+        });
+    } else {
+        let productID = mongoose.Types.ObjectId(req.body.id);
 
-    // @ts-ignore
-    ProductSchema.deleteOne({ _id: productID }, (err, product) => {
-        if (err) {
-            res.status(UNAUTHORIZED).send({
-                message: CASE_UNAUTHORIZED_MESSAGE,
-            });
-            next(err);
-        } else if (!product.deletedCount) {
-            res.status(NOT_FOUND).send({
-                message: CASE_NOT_FOUND_MESSAGE,
-            });
-        } else {
-            console.log(product);
-            res.json({ message: CASE_SUCCESS_MESSAGE });
-        }
-    });
+        ProductSchema.findOneAndDelete(
+            { _id: productID },
+            {},
+            (err: Error, product: any) => {
+                if (err) {
+                    res.status(UNAUTHORIZED).send({
+                        message: CASE_UNAUTHORIZED_MESSAGE,
+                    });
+                    next(err);
+                } else if (!product) {
+                    res.status(NOT_FOUND).send({
+                        message: CASE_NOT_FOUND_MESSAGE,
+                    });
+                } else {
+                    res.json({
+                        message: CASE_SUCCESS_MESSAGE,
+                        deletedProduct: serializeRespondedData(product),
+                    });
+                }
+            }
+        );
+    }
 };
