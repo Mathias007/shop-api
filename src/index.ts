@@ -3,17 +3,21 @@ import express from "express";
 import mongoose from "mongoose";
 
 import routes from "./routes";
+import routesPaths from "./config/routesPaths";
+import configVariables from "./config/configVariables";
+
 import {
+    mongoStatuses,
     PORT_LISTENING_START_MESSAGE,
     DATABASE_CONNECTION_SUCCESS_MESSAGE,
     DATABASE_CONNECTION_ERROR_MESSAGE,
-} from "./config/messages";
-import config from "./config/config";
-import { initializeProductsData } from "./seeders/products.seeder";
-import routesPaths from "./config/routesPaths";
+} from "./config/database";
+
+import { initializeProductData } from "./seeders/products.seeder";
 
 const { ROOT } = routesPaths;
-const { NODE_PORT, MONGO_URI, CORS_ORIGIN } = config;
+const { NODE_PORT, NODE_HOST, MONGO_URI, CORS_ORIGIN } = configVariables;
+const { CONNECTED, ERROR } = mongoStatuses;
 
 const app = express();
 
@@ -37,16 +41,15 @@ mongoose
     .then(() => console.log(DATABASE_CONNECTION_SUCCESS_MESSAGE()))
     .catch((err) => console.log(DATABASE_CONNECTION_ERROR_MESSAGE(err)));
 
-mongoose.connection.on("connected", () => {
-    initializeProductsData();
-    console.log("Initialize product");
+mongoose.connection.on(CONNECTED, () => {
+    initializeProductData();
 });
-mongoose.connection.on("error", (err) => {
+mongoose.connection.on(ERROR, (err) => {
     console.log(DATABASE_CONNECTION_ERROR_MESSAGE(err));
 });
 
 app.use(ROOT, routes);
 
-app.listen(NODE_PORT, "0.0.0.0", () => {
+app.listen(NODE_PORT, NODE_HOST, () => {
     console.log(PORT_LISTENING_START_MESSAGE(NODE_PORT));
 });
