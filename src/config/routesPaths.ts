@@ -4,7 +4,6 @@ import { TCrudDNames } from "../types/config.types";
 const {
     PRODUCTS,
     ADD,
-    ADD_MANY,
     EDIT,
     LIST,
     REMOVE,
@@ -21,7 +20,6 @@ const routesPaths: {
         LIST: `/${PRODUCTS}/${LIST}`,
         SINGLE: `/${PRODUCTS}/${SINGLE}`,
         ADD: `/${PRODUCTS}/${ADD}`,
-        ADD_MANY: `/${PRODUCTS}/${ADD_MANY}`,
         EDIT: `/${PRODUCTS}/${EDIT}`,
         REMOVE: `/${PRODUCTS}/${REMOVE}`,
     },
