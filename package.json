@@ -6,19 +6,10 @@
     "license": "MIT",
     "scripts": {
         "start": "ts-node-esm src/index",
-        "start:dev": "nodemon --exec babel-node src/index",
-        "build": "babel src --out-dir dist",
+        "nodemon": "nodemon --exec ts-node-esm src/index",
         "serve": "node dist/index"
     },
     "dependencies": {
-        "@babel/cli": "^7.13.14",
-        "@babel/core": "^7.13.14",
-        "@babel/node": "^7.13.13",
-        "@babel/plugin-proposal-class-properties": "^7.13.0",
-        "@babel/plugin-proposal-export-default-from": "^7.12.13",
-        "@babel/plugin-transform-async-to-generator": "^7.13.0",
-        "@babel/polyfill": "^7.12.1",
-        "@types/mongoose": "^5.11.97",
         "body-parser": "^1.20.1",
         "core-js": "^3.9.1",
         "cors": "^2.8.5",
@@ -32,6 +23,7 @@
         "@types/cors": "^2.8.12",
         "@types/express": "^4.17.14",
         "@types/node": "17.0.23",
+        "@types/mongoose": "^5.11.97",
         "ts-jest": "^26.5.2",
         "ts-loader": "^8.0.17",
         "ts-node": "^10.9.1",
